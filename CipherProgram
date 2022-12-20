@@ -1,0 +1,68 @@
+import java.util.Scanner;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+public class CipherProgram {
+  public static void main(String[] args) throws Exception {
+    Scanner scanner = new Scanner(System.in);
+
+    // Prompt user to choose algorithm
+    System.out.println("Choose an algorithm (1 for Hill Cipher, 2 for DES):");
+    int algorithm = scanner.nextInt();
+
+    // Perform Hill Cipher encryption and decryption
+    if (algorithm == 1) {
+      // Get encryption matrix from user
+      System.out.println("Enter the encryption matrix (3x3):");
+      int[][] encryptionMatrix = new int[3][3];
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          encryptionMatrix[i][j] = scanner.nextInt();
+        }
+      }
+
+      // Get modulus value from user
+      System.out.println("Enter the modulus value:");
+      int modulus = scanner.nextInt();
+
+      // Get message to encrypt from user
+      System.out.println("Enter the message to encrypt:");
+      scanner.nextLine();
+      String message = scanner.nextLine();
+
+      // Encrypt the message
+      String encryptedMessage = HillCipher.encrypt(message, encryptionMatrix, modulus);
+      System.out.println("Encrypted message: " + encryptedMessage);
+
+      // Decrypt the message
+      String decryptedMessage = HillCipher.decrypt(encryptedMessage, encryptionMatrix, modulus);
+      System.out.println("Decrypted message: " + decryptedMessage);
+    }
+    // Perform DES encryption and decryption
+    else if (algorithm == 2) {
+      // Generate secret key
+      KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
+      SecretKey secretKey = keyGenerator.generateKey();
+
+      // Get message to encrypt from user
+      System.out.println("Enter the message to encrypt:");
+      scanner.nextLine();
+      String message = scanner.nextLine();
+
+      // Encrypt the message
+      Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+      cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+      byte[] encryptedBytes = cipher.doFinal(message.getBytes());
+      String encryptedMessage = new String(encryptedBytes);
+      System.out.println("Encrypted message: " + encryptedMessage);
+
+      // Decrypt the message
+      cipher.init(Cipher.DECRYPT_MODE, secretKey);
+      byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+      String decryptedMessage = new String(decryptedBytes);
+      System.out.println("Decrypted message: " + decryptedMessage);
+    }
+  }
+}
