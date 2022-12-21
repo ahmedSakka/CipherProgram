@@ -5,6 +5,17 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class CipherProgram {
+
+  public static class HillCipher {
+    public static String encrypt(String message, int[][] encryptionMatrix, int modulus) {
+      // Implementation for encrypting a message using the Hill Cipher algorithm
+    }
+
+    public static String decrypt(String message, int[][] encryptionMatrix, int modulus) {
+      // Implementation for decrypting a message using the Hill Cipher algorithm
+    }
+  }
+
   public static void main(String[] args) throws Exception {
     Scanner scanner = new Scanner(System.in);
 
