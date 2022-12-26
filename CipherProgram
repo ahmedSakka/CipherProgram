@@ -5,16 +5,145 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class CipherProgram {
-
   public static class HillCipher {
     public static String encrypt(String message, int[][] encryptionMatrix, int modulus) {
-      // Implementation for encrypting a message using the Hill Cipher algorithm
+      // Convert message to lowercase and remove non-alphabetic characters
+      message = message.toLowerCase().replaceAll("[^a-z]", "");
+    
+      // Encrypt message one block at a time
+      StringBuilder encryptedMessage = new StringBuilder();
+      for (int i = 0; i < message.length(); i += 3) {
+        // Convert block to vector
+        int[] vector = new int[3];
+        for (int j = 0; j < 3; j++) {
+          char c = (i + j < message.length()) ? message.charAt(i + j) : 'a';
+          vector[j] = c - 'a';
+        }
+    
+        // Multiply vector by encryption matrix
+        int[] result = new int[3];
+        for (int j = 0; j < 3; j++) {
+          for (int k = 0; k < 3; k++) {
+            result[j] = (result[j] + vector[k] * encryptionMatrix[j][k]) % modulus;
+          }
+        }
+    
+        // Convert resulting vector back into block of letters
+        for (int j = 0; j < 3; j++) {
+          char c = (char) ((result[j] % 26) + 'a');
+          encryptedMessage.append(c);
+        }
+      }
+    
+      return encryptedMessage.toString();
     }
 
-    public static String decrypt(String message, int[][] encryptionMatrix, int modulus) {
-      // Implementation for decrypting a message using the Hill Cipher algorithm
+
+    //defining mod inverse method
+    public static int modInverse(int a, int m) {
+      int m0 = m;
+      int y = 0;
+      int x = 1;
+    
+      while (a > 1) {
+          int q = a / m;
+          int t = m;
+          m = a % m;
+          a = t;
+          t = y;
+          y = x - q * y;
+          x = t;
+      }
+    
+      if (x < 0) {
+          x += m0;
+      }  
+      return x;
+    }
+    
+
+    public static String decrypt(String encryptedMessage, int[][] encryptionMatrix, int modulus) {
+      // Convert message to lowercase and remove non-alphabetic characters
+      encryptedMessage = encryptedMessage.toLowerCase().replaceAll("[^a-z]", "");
+    
+      // Pad message with extra characters to make its length a multiple of 3
+      int numPaddingChars = 3 - (encryptedMessage.length() % 3);
+      if (numPaddingChars < 3) {
+        for (int i = 0; i < numPaddingChars; i++) {
+          encryptedMessage += 'a';
+        }
+      }
+    
+      // Divide message into blocks of letters
+      int numBlocks = (int) Math.ceil((double) encryptedMessage.length() / 3);
+      String[] blocks = new String[numBlocks];
+      for (int i = 0; i < numBlocks; i++) {
+        int startIndex = i * 3;
+        int endIndex = startIndex + 3;
+        blocks[i] = encryptedMessage.substring(startIndex, endIndex);
+      }
+    
+    
+    // Calculate the inverse of the encryption matrix
+    int determinant = (encryptionMatrix[0][0] * (encryptionMatrix[1][1] * encryptionMatrix[2][2] - encryptionMatrix[2][1] * encryptionMatrix[1][2]))
+    - (encryptionMatrix[0][1] * (encryptionMatrix[1][0] * encryptionMatrix[2][2] - encryptionMatrix[2][0] * encryptionMatrix[1][2]))
+    + (encryptionMatrix[0][2] * (encryptionMatrix[1][0] * encryptionMatrix[2][1] - encryptionMatrix[2][0] * encryptionMatrix[1][1]));
+int determinantInverse = modInverse(determinant % modulus, modulus);
+
+    
+      int[][] inverseMatrix = new int[3][3];
+  inverseMatrix[0][0] = (encryptionMatrix[1][1] * encryptionMatrix[2][2] - encryptionMatrix[2][1] * encryptionMatrix[1][2]) % modulus;
+  inverseMatrix[0][1] = (encryptionMatrix[0][2] * encryptionMatrix[2][1] - encryptionMatrix[0][1] * encryptionMatrix[2][2]) % modulus;
+  inverseMatrix[0][2] = (encryptionMatrix[0][1] * encryptionMatrix[1][2] - encryptionMatrix[0][2] * encryptionMatrix[1][1]) % modulus;
+  inverseMatrix[1][0] = (encryptionMatrix[1][2] * encryptionMatrix[2][0] - encryptionMatrix[1][0] * encryptionMatrix[2][2]) % modulus;
+  inverseMatrix[1][1] = (encryptionMatrix[0][0] * encryptionMatrix[2][2] - encryptionMatrix[0][2] * encryptionMatrix[2][0]) % modulus;
+  inverseMatrix[1][2] = (encryptionMatrix[1][0] * encryptionMatrix[0][2] - encryptionMatrix[0][0] * encryptionMatrix[1][2]) % modulus;
+  inverseMatrix[2][0] = (encryptionMatrix[1][0] * encryptionMatrix[2][1] - encryptionMatrix[2][0] * encryptionMatrix[1][1]) % modulus;
+  inverseMatrix[2][1] = (encryptionMatrix[2][0] * encryptionMatrix[0][1] - encryptionMatrix[0][0] * encryptionMatrix[2][1]) % modulus;
+  inverseMatrix[2][2] = (encryptionMatrix[0][0] * encryptionMatrix[1][1] - encryptionMatrix[1][0] * encryptionMatrix[0][1]) % modulus;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      inverseMatrix[i][j] = (inverseMatrix[i][j] * determinantInverse) % modulus;
+      if (inverseMatrix[i][j] < 0) {
+        inverseMatrix[i][j] += modulus;
+      }
     }
   }
+
+
+   // Decrypt each block
+   StringBuilder decryptedMessage = new StringBuilder();
+   for (String block : blocks) {
+     // Convert block to vector
+     int[] vector = new int[3];
+     for (int i = 0; i < 3; i++) {
+       char c = block.charAt(i);
+       vector[i] = c - 'a';
+     }
+ 
+     // Multiply vector by inverse matrix
+     int[] result = new int[3];
+     for (int i = 0; i < 3; i++) {
+       for (int j = 0; j < 3; j++) {
+         result[i] = (result[i] + vector[j] * inverseMatrix[i][j]) % modulus;
+       }
+     }
+ 
+     // Convert resulting vector back into block of letters
+     for (int i = 0; i < 3; i++) {
+       char c = (char) ((result[i] % 26) + 'a');
+       decryptedMessage.append(c);
+     }
+   }
+ 
+   return decryptedMessage.toString();
+ 
+}
+    }
+      
+
+          
+    
 
   public static void main(String[] args) throws Exception {
     Scanner scanner = new Scanner(System.in);
@@ -37,8 +166,12 @@ public class CipherProgram {
       // Get modulus value from user
       System.out.println("Enter the modulus value:");
       int modulus = scanner.nextInt();
-
-      // Get message to encrypt from user
+     
+      System.out.println("Choose whether to encrypt or decrypt a message (1 for encryption, 2 for decryption):");
+      int mode = scanner.nextInt();
+      
+      if(mode == 1){
+            // Get message to encrypt from user
       System.out.println("Enter the message to encrypt:");
       scanner.nextLine();
       String message = scanner.nextLine();
@@ -46,10 +179,18 @@ public class CipherProgram {
       // Encrypt the message
       String encryptedMessage = HillCipher.encrypt(message, encryptionMatrix, modulus);
       System.out.println("Encrypted message: " + encryptedMessage);
-
+      }
+      
+      else if(mode == 2){
+      // Get message to encrypt from user
+      System.out.println("Enter the message to encrypt:");
+      scanner.nextLine();
+      String encryptedMessage = scanner.nextLine();
       // Decrypt the message
       String decryptedMessage = HillCipher.decrypt(encryptedMessage, encryptionMatrix, modulus);
       System.out.println("Decrypted message: " + decryptedMessage);
+      }
+    
     }
     // Perform DES encryption and decryption
     else if (algorithm == 2) {
