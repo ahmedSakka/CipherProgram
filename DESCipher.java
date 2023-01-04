@@ -19,27 +19,6 @@ public class DESCipher {
         return encryptedMessage;
       }
       
-      public static byte[] padMessage(byte[] message) {
-        int numPadBytes = 8 - message.length % 8;
-        byte[] paddedMessage = Arrays.copyOf(message, message.length + numPadBytes);
-        for (int i = message.length; i < paddedMessage.length; i++) {
-          paddedMessage[i] = 0;
-        }
-        return paddedMessage;
-      }
-      
-      // Removes the padding from the given message
-      public static byte[] removePadding(byte[] message) {
-        int numPadBytes = 0;
-        for (int i = message.length - 1; i > 0; i--) {
-          if (message[i] == 0) {
-            numPadBytes++;
-          } else {
-            break;
-          }
-        }
-        return Arrays.copyOf(message, message.length - numPadBytes);
-      }
       
       public static String decrypt(byte[] encryptedMessage, SecretKey key, byte[] iv) throws Exception {
         // Initialize cipher in decrypt mode
